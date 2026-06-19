@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block content %}
+<h1 class="h4 section-title mb-4">Subscription</h1>
+<div class="scv-card" style="max-width: 560px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <span class="plan-chip plan-{{ profile.plan }} fs-6">{{ profile.get_plan_display }} plan</span>
+    </div>
+    {% if profile.is_premium %}
+        <p class="text-muted small mb-4">You have unlimited CVs, all templates, and no PDF watermarks.</p>
+        {% if portal_url %}
+        <a href="{{ portal_url }}" class="btn btn-outline-secondary">Manage subscription via Stripe</a>
+        {% endif %}
+    {% else %}
+        <p class="text-muted small mb-2">Free plan: up to {{ profile.FREE_PLAN_RESUME_LIMIT }} CVs, core templates, watermarked PDFs.</p>
+        <p class="text-muted small mb-4">Upgrade for unlimited CVs, all 10 templates, and clean PDF downloads.</p>
+        <form action="{% url 'payments:checkout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-accent px-5">Upgrade to Premium</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}

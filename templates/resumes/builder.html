@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Editing {{ resume.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+        <a href="{% url 'resumes:list' %}" class="small text-muted"><i class="bi bi-arrow-left"></i> My CVs</a>
+        <h1 class="h4 section-title mt-1 mb-0">{{ resume.title }}</h1>
+        <p class="text-muted small mb-0">Template: {{ resume.template.name }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <div class="completion-ring" style="--pct: {{ completion }};"><span>{{ completion }}%</span></div>
+        <div class="d-flex flex-column gap-2">
+            <a href="{% url 'resumes:preview' resume.pk %}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i> Preview</a>
+            <a href="{% url 'resumes:pdf' resume.pk %}" class="btn btn-sm btn-brand"><i class="bi bi-download"></i> Download PDF</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <a href="{% url 'resumes:meta_edit' resume.pk %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-card-text me-2"></i>CV Title & Professional Summary</div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{% url 'resumes:personal_info_edit' resume.pk %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-person-badge me-2"></i>Personal Information {% if not has_personal_info %}<span class="badge text-bg-warning text-dark ms-1">Missing</span>{% endif %}</div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{% url 'resumes:experience_edit' resume.pk %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-briefcase me-2"></i>Work Experience <span class="badge text-bg-light ms-1">{{ experience_count }}</span></div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{% url 'resumes:education_edit' resume.pk %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-mortarboard me-2"></i>Education <span class="badge text-bg-light ms-1">{{ education_count }}</span></div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+    {% for s in sections %}
+    <div class="col-md-6">
+        <a href="{% url 'resumes:section_list' resume.pk s.key %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi {{ s.icon }} me-2"></i>{{ s.label }} <span class="badge text-bg-light ms-1">{{ s.count }}</span></div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+    <div class="col-md-6">
+        <a href="{% url 'resumes:customize' resume.pk %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-palette me-2"></i>Design & Customization</div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6">
+        <a href="{% url 'resumes:template_picker' resume.pk %}" class="text-decoration-none">
+            <div class="section-row d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-layout-text-window-reverse me-2"></i>Switch Template</div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mt-2">
+    <div class="col-12">
+        <h2 class="h6 fw-bold mb-2 text-muted text-uppercase" style="letter-spacing:.06em; font-size:.78rem;">
+            <i class="bi bi-stars me-1"></i> AI Tools
+        </h2>
+    </div>
+    <div class="col-md-6">
+        <div class="scv-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="fw-semibold small">Rewrite Summary</div>
+                <div class="text-muted" style="font-size:.82rem;">AI rewrites your professional summary</div>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-rewrite-summary" data-url="{% url 'ai:rewrite_summary' resume.pk %}">
+                <i class="bi bi-magic"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="scv-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="fw-semibold small">Analyze CV</div>
+                <div class="text-muted" style="font-size:.82rem;">Score and improvement suggestions</div>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-analyze" data-url="{% url 'ai:analyze' resume.pk %}">
+                <i class="bi bi-graph-up"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="scv-card d-flex justify-content-between align-items-center">
+            <div>
+                <div class="fw-semibold small">Career Suggestions</div>
+                <div class="text-muted" style="font-size:.82rem;">Personalised next-step recommendations</div>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-career" data-url="{% url 'ai:career_suggestions' resume.pk %}">
+                <i class="bi bi-compass"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-12">
+        <div id="ai-result-panel" class="scv-card d-none">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold small" id="ai-result-title">Result</span>
+                <button class="btn-close btn-sm" onclick="document.getElementById('ai-result-panel').classList.add('d-none')"></button>
+            </div>
+            <div id="ai-result-body" class="small text-muted"></div>
+        </div>
+    </div>
+</div>
+
+{% if not user.profile.is_premium %}
+<div class="scv-card mt-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, var(--scv-brand-dark), var(--scv-brand)); color: #fff; border: none;">
+    <div>
+        <div class="fw-bold">Upgrade to Premium</div>
+        <div style="opacity:.8; font-size:.88rem;">Unlimited CVs &middot; All 10 templates &middot; No watermarks</div>
+    </div>
+    <a href="{% url 'payments:subscription' %}" class="btn btn-accent btn-sm flex-shrink-0">Upgrade</a>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(function () {
+    const panel = document.getElementById('ai-result-panel');
+    const titleEl = document.getElementById('ai-result-title');
+    const bodyEl = document.getElementById('ai-result-body');
+    const csrfToken = '{{ csrf_token }}';
+
+    function showPanel(title, html) {
+        titleEl.textContent = title;
+        bodyEl.innerHTML = html;
+        panel.classList.remove('d-none');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function aiPost(url, title, renderFn) {
+        showPanel(title, '<i class="bi bi-hourglass-split"></i> Thinking…');
+        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrfToken } })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { showPanel(title, '<span class="text-danger">' + data.error + '</span>'); return; }
+                showPanel(title, renderFn(data));
+            })
+            .catch(() => showPanel(title, '<span class="text-danger">Request failed.</span>'));
+    }
+
+    document.getElementById('btn-rewrite-summary').onclick = function () {
+        aiPost(this.dataset.url, 'AI-Rewritten Summary', d =>
+            '<p>' + d.text + '</p><small class="text-muted">Copy this into your Professional Summary section.</small>'
+        );
+    };
+
+    document.getElementById('btn-analyze').onclick = function () {
+        aiPost(this.dataset.url, 'CV Analysis', d => {
+            const strength = d.strengths ? d.strengths.map(s => '<li>' + s + '</li>').join('') : '';
+            const improve  = d.improvements ? d.improvements.map(s => '<li>' + s + '</li>').join('') : '';
+            const ats      = d.ats_tips ? d.ats_tips.map(s => '<li>' + s + '</li>').join('') : '';
+            return '<strong>Score: ' + (d.score || '&mdash;') + '/100</strong>'
+                + (strength ? '<br><strong>Strengths:</strong><ul>' + strength + '</ul>' : '')
+                + (improve  ? '<strong>Improvements:</strong><ul>' + improve  + '</ul>' : '')
+                + (ats      ? '<strong>ATS tips:</strong><ul>'      + ats      + '</ul>' : '');
+        });
+    };
+
+    document.getElementById('btn-career').onclick = function () {
+        aiPost(this.dataset.url, 'Career Suggestions', d =>
+            '<ul>' + (d.suggestions || []).map(s => '<li>' + s + '</li>').join('') + '</ul>'
+        );
+    };
+})();
+</script>
+{% endblock %}

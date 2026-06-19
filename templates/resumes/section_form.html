@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<a href="{% url 'resumes:builder' resume.pk %}" class="small text-muted d-inline-block mb-3"><i class="bi bi-arrow-left"></i> Back to builder</a>
+<h1 class="h5 section-title mb-4">{{ title }}</h1>
+
+<div class="scv-card" style="max-width: 720px;">
+    {% if ai_suggestions %}
+    <div class="ai-field-toolbar mb-3">
+        {% for item in ai_suggestions %}
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            data-ai-suggest
+            data-field-type="{{ item.field_type }}"
+            data-target-name="{{ item.target }}"
+        >
+            <i class="bi {{ item.icon }}"></i> {{ item.label }}
+        </button>
+        {% endfor %}
+    </div>
+    <div id="ai-field-suggestions" class="ai-suggestion-panel d-none mb-3"></div>
+    {% endif %}
+
+    <form method="post" novalidate {% if is_multipart %}enctype="multipart/form-data"{% endif %}>
+        {% csrf_token %}
+        <div class="row g-3">
+        {% for field in form %}
+            <div class="col-md-{% if field.field.widget.input_type == 'textarea' %}12{% else %}6{% endif %}">
+                <label class="form-label small fw-semibold">{{ field.label }}</label>
+                {{ field|add_class:"" }}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+            </div>
+        {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-brand mt-4">Save</button>
+    </form>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+{% if ai_suggestions and ai_suggestion_url %}
+<script>
+(function () {
+    const endpoint = "{% url ai_suggestion_url resume.pk %}";
+    const csrfToken = "{{ csrf_token }}";
+    const panel = document.getElementById("ai-field-suggestions");
+
+    function fieldByName(name) {
+        return document.querySelector('[name="' + CSS.escape(name) + '"]');
+    }
+
+    function renderSuggestions(target, suggestions) {
+        panel.innerHTML = suggestions.map((item) => (
+            '<div class="ai-suggestion-item">'
+            + '<div class="ai-suggestion-text">' + escapeHtml(item.value).replaceAll('\n', '<br>') + '</div>'
+            + '<button type="button" class="btn btn-sm btn-brand" data-insert-suggestion>Use</button>'
+            + '</div>'
+        )).join('');
+        panel.querySelectorAll('[data-insert-suggestion]').forEach((button, index) => {
+            button.addEventListener('click', function () {
+                target.value = suggestions[index].value;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.focus();
+            });
+        });
+        panel.classList.remove('d-none');
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value;
+        return div.innerHTML;
+    }
+
+    document.querySelectorAll('[data-ai-suggest]').forEach((button) => {
+        button.addEventListener('click', function () {
+            const target = fieldByName(button.dataset.targetName);
+            if (!target) return;
+            panel.classList.remove('d-none');
+            panel.innerHTML = '<div class="text-muted small"><i class="bi bi-hourglass-split"></i> Generating suggestions...</div>';
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+                body: JSON.stringify({
+                    field_type: button.dataset.fieldType,
+                    current_value: target.value
+                })
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (!data.ok) {
+                    panel.innerHTML = '<div class="text-danger small">' + escapeHtml(data.error) + '</div>';
+                    return;
+                }
+                renderSuggestions(target, data.suggestions || []);
+            })
+            .catch(() => {
+                panel.innerHTML = '<div class="text-danger small">Suggestion request failed.</div>';
+            });
+        });
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

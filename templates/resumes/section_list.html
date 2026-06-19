@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ label }}{% endblock %}
+{% block content %}
+<a href="{% url 'resumes:builder' resume.pk %}" class="small text-muted d-inline-block mb-3"><i class="bi bi-arrow-left"></i> Back to builder</a>
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <h1 class="h5 section-title mb-0">{{ label }}</h1>
+    <a href="{% url 'resumes:section_add' resume.pk key %}" class="btn btn-sm btn-accent"><i class="bi bi-plus-lg"></i> Add</a>
+</div>
+
+{% if items %}
+<div class="list-group">
+{% for item in items %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ item }}</span>
+        <span class="d-flex gap-2">
+            <a href="{% url 'resumes:section_edit' resume.pk key item.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+            <form action="{% url 'resumes:section_delete' resume.pk key item.pk %}" method="post" onsubmit="return confirm('Remove this item?');">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+        </span>
+    </div>
+{% endfor %}
+</div>
+{% else %}
+<div class="scv-card text-center py-4">
+    <p class="text-muted small mb-3">Nothing added yet.</p>
+    <a href="{% url 'resumes:section_add' resume.pk key %}" class="btn btn-accent btn-sm">Add your first item</a>
+</div>
+{% endif %}
+{% endblock %}

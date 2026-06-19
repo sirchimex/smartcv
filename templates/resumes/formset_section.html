@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<a href="{% url 'resumes:builder' resume.pk %}" class="small text-muted d-inline-block mb-3"><i class="bi bi-arrow-left"></i> Back to builder</a>
+<h1 class="h5 section-title mb-1">{{ title }}</h1>
+<p class="text-muted small mb-4">{{ empty_message }}</p>
+
+{% if ai_formset_suggestions %}
+<div id="ai-field-suggestions" class="ai-suggestion-panel d-none mb-3"></div>
+{% endif %}
+
+<form method="post" novalidate id="formset-form">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <div id="formset-container">
+        {% for form in formset.forms %}
+            <div class="formset-row" data-formset-row>
+                {% if form.instance.pk %}{{ form.id }}{% endif %}
+                <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        {% if field.name != 'DELETE' %}
+                        <div class="col-md-{% if field.field.widget.input_type == 'textarea' %}12{% else %}4{% endif %}">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <label class="form-label small fw-semibold">{{ field.label }}</label>
+                                {% if ai_formset_suggestions and field.name == 'description' %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-secondary ai-inline-btn"
+                                    data-ai-description
+                                    data-description-name="{{ field.html_name }}"
+                                >
+                                    <i class="bi bi-stars"></i> Suggest
+                                </button>
+                                {% endif %}
+                            </div>
+                            {{ field|add_class:"" }}
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="form-check mt-2">
+                    {{ form.DELETE|add_class:"form-check-input" }}
+                    <label class="form-check-label small text-danger">Remove this entry</label>
+                </div>
+                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <template id="empty-form-template">
+        <div class="formset-row" data-formset-row>
+            <div class="row g-3">
+                {% for field in formset.empty_form.visible_fields %}
+                    {% if field.name != 'DELETE' %}
+                    <div class="col-md-{% if field.field.widget.input_type == 'textarea' %}12{% else %}4{% endif %}">
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            <label class="form-label small fw-semibold">{{ field.label }}</label>
+                            {% if ai_formset_suggestions and field.name == 'description' %}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary ai-inline-btn"
+                                data-ai-description
+                                data-description-name="{{ field.html_name }}"
+                            >
+                                <i class="bi bi-stars"></i> Suggest
+                            </button>
+                            {% endif %}
+                        </div>
+                        {{ field|add_class:"" }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="form-check mt-2">
+                {{ formset.empty_form.DELETE|add_class:"form-check-input" }}
+                <label class="form-check-label small text-danger">Remove this entry</label>
+            </div>
+            {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+        </div>
+    </template>
+
+    <button type="button" id="add-row-btn" class="btn btn-outline-secondary btn-sm mb-4">
+        <i class="bi bi-plus-lg"></i> Add another
+    </button>
+    <div>
+        <button type="submit" class="btn btn-brand">Save</button>
+    </div>
+</form>
+
+<script>
+(function () {
+    const container = document.getElementById("formset-container");
+    const totalFormsInput = document.querySelector('[name="{{ formset.prefix }}-TOTAL_FORMS"]');
+    const template = document.getElementById("empty-form-template").innerHTML;
+    const prefix = "{{ formset.prefix }}";
+
+    document.getElementById("add-row-btn").addEventListener("click", function () {
+        const formIndex = parseInt(totalFormsInput.value, 10);
+        const html = template.replaceAll("__prefix__", formIndex);
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html.trim();
+        container.appendChild(wrapper.firstElementChild);
+        totalFormsInput.value = formIndex + 1;
+    });
+})();
+</script>
+{% if ai_formset_suggestions and ai_suggestion_url %}
+<script>
+(function () {
+    const endpoint = "{% url ai_suggestion_url resume.pk %}";
+    const csrfToken = "{{ csrf_token }}";
+    const panel = document.getElementById("ai-field-suggestions");
+    const form = document.getElementById("formset-form");
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value;
+        return div.innerHTML;
+    }
+
+    function inputByName(name) {
+        return document.querySelector('[name="' + CSS.escape(name) + '"]');
+    }
+
+    function siblingField(descriptionName, fieldName) {
+        const name = descriptionName.replace(/-description$/, '-' + fieldName);
+        return inputByName(name);
+    }
+
+    function renderSuggestions(target, suggestions) {
+        panel.innerHTML = suggestions.map((item) => (
+            '<div class="ai-suggestion-item">'
+            + '<div class="ai-suggestion-text">' + escapeHtml(item.value).replaceAll('\n', '<br>') + '</div>'
+            + '<button type="button" class="btn btn-sm btn-brand" data-insert-suggestion>Use</button>'
+            + '</div>'
+        )).join('');
+        panel.querySelectorAll('[data-insert-suggestion]').forEach((button, index) => {
+            button.addEventListener('click', function () {
+                target.value = suggestions[index].value;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+                target.focus();
+            });
+        });
+        panel.classList.remove('d-none');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    form.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-ai-description]');
+        if (!button) return;
+
+        const target = inputByName(button.dataset.descriptionName);
+        if (!target) return;
+
+        const jobTitle = siblingField(button.dataset.descriptionName, 'job_title');
+        const company = siblingField(button.dataset.descriptionName, 'company');
+        panel.classList.remove('d-none');
+        panel.innerHTML = '<div class="text-muted small"><i class="bi bi-hourglass-split"></i> Generating suggestions...</div>';
+
+        fetch(endpoint, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+            body: JSON.stringify({
+                field_type: 'job_description',
+                current_value: target.value,
+                job_title: jobTitle ? jobTitle.value : '',
+                company: company ? company.value : ''
+            })
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (!data.ok) {
+                panel.innerHTML = '<div class="text-danger small">' + escapeHtml(data.error) + '</div>';
+                return;
+            }
+            renderSuggestions(target, data.suggestions || []);
+        })
+        .catch(() => {
+            panel.innerHTML = '<div class="text-danger small">Suggestion request failed.</div>';
+        });
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

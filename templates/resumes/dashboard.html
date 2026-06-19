@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - SmartCV Builder{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h4 section-title mb-1">Dashboard</h1>
+        <p class="text-muted small mb-0">A quick look at your CVs and account.</p>
+    </div>
+    <a href="{% url 'resumes:create' %}" class="btn btn-accent">
+        <i class="bi bi-plus-lg"></i> New CV
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_cvs }}</div>
+            <div class="stat-label">CVs created</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ download_count }}</div>
+            <div class="stat-label">Downloads</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ profile_completion }}%</div>
+            <div class="stat-label">Avg. profile completion</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{% if resume_limit %}{{ total_cvs }}/{{ resume_limit }}{% else %}&infin;{% endif %}</div>
+            <div class="stat-label">{{ profile.get_plan_display }} plan usage</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="scv-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 fw-bold mb-0">Recently edited CVs</h2>
+                <a href="{% url 'resumes:list' %}" class="small">View all</a>
+            </div>
+            {% if recent_resumes %}
+                <div class="list-group list-group-flush">
+                {% for resume in recent_resumes %}
+                    <a href="{% url 'resumes:builder' resume.pk %}" class="list-group-item list-group-item-action px-0 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">{{ resume.title }}</div>
+                            <div class="text-muted small">{{ resume.template.name }} &middot; updated {{ resume.updated_at|timesince }} ago</div>
+                        </div>
+                        <span class="badge text-bg-light">{{ resume.completion_percentage }}%</span>
+                    </a>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted small mb-0">No CVs yet. <a href="{% url 'resumes:create' %}">Create your first one</a>.</p>
+            {% endif %}
+        </div>
+
+        <div class="scv-card">
+            <h2 class="h6 fw-bold mb-3">Download history</h2>
+            {% if recent_downloads %}
+                <ul class="list-unstyled mb-0 small">
+                {% for d in recent_downloads %}
+                    <li class="d-flex justify-content-between py-1 border-bottom">
+                        <span>{{ d.resume.title }}</span>
+                        <span class="text-muted">{{ d.downloaded_at|date:"M j, Y H:i" }}</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted small mb-0">No downloads yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="scv-card">
+            <h2 class="h6 fw-bold mb-3">Available templates</h2>
+            <div class="row g-2">
+            {% for t in templates %}
+                <div class="col-6">
+                    <div class="border rounded p-2 small h-100">
+                        <div class="fw-semibold">{{ t.name }}</div>
+                        {% if t.is_premium %}<span class="badge text-bg-warning text-dark mt-1">Premium</span>{% else %}<span class="badge text-bg-success mt-1">Free</span>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

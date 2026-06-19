@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<h1 class="h4 section-title mb-4">Your profile</h1>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="scv-card">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ field.label }}</label>
+                        {{ field|add_class:"form-control" }}
+                        {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-brand">Save changes</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="scv-card">
+            <h2 class="h6 fw-bold mb-3">Subscription</h2>
+            <p class="mb-1"><span class="plan-chip plan-{{ user.profile.plan }}">{{ user.profile.get_plan_display }}</span></p>
+            <p class="text-muted small mb-0">
+                {% if user.profile.is_premium %}
+                    You have unlimited CVs, all templates, and premium (no watermark) downloads.
+                {% else %}
+                    Free plan: up to {{ user.profile.FREE_PLAN_RESUME_LIMIT }} CVs, core templates, downloads carry a watermark.
+                    Payment integration (Stripe/Paystack/Flutterwave) is on the roadmap - an admin can flip your plan
+                    to Premium in /admin/ for now.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

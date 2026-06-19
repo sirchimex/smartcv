@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.title }}</title>
+<style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: {{ resume.font_family|default:"'Inter', sans-serif"|safe }};
+        color: #232020;
+        font-size: 10pt;
+        line-height: 1.5;
+    }
+    .page { position: relative; }
+
+    header { margin-bottom: 8px; }
+    header h1 { font-size: 22pt; font-weight: 700; margin: 0; color: #1a1a1a; }
+    header h2 { font-size: 11pt; font-weight: 400; margin: 3px 0 0; color: {{ resume.accent }}; letter-spacing: .05em; }
+
+    .header-rule {
+        display: flex; align-items: center; gap: 10px; margin: 8px 0 6px;
+    }
+    .header-rule .line { flex: 1; height: 1px; background: {{ resume.accent }}; }
+    .header-contact { font-size: 9pt; color: #555; display: flex; flex-wrap: wrap; gap: 0 14px; }
+
+    .body-grid { display: flex; gap: 12mm; margin-top: 14px; }
+    .col-main { flex: 1.6; }
+    .col-side { flex: 1; }
+
+    h3.section-h {
+        font-size: 10pt; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .09em; color: {{ resume.accent }};
+        border-bottom: 1.5px solid {{ resume.accent }}40;
+        padding-bottom: 3px; margin: 0 0 8px;
+    }
+    section { margin-bottom: 16px; }
+
+    .entry { margin-bottom: 10px; }
+    .entry-top { font-weight: 700; font-size: 10pt; }
+    .entry-meta { display: flex; justify-content: space-between; font-size: 9pt; color: #666; margin-bottom: 2px; }
+    .entry p { margin: 3px 0 0; color: #3a3a3a; }
+
+    .summary { color: #444; font-size: 9.8pt; margin: 0 0 2px; }
+
+    .side-item { margin-bottom: 6px; font-size: 9.2pt; }
+    .side-item .name { font-weight: 600; }
+    .side-item .meta { color: #777; font-size: 8.7pt; }
+
+    .dot-bar { display: flex; gap: 3px; margin-top: 3px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid {{ resume.accent }}; }
+    .dot.filled { background: {{ resume.accent }}; }
+
+    .pill-wrap { display: flex; flex-wrap: wrap; gap: 4px; }
+    .pill {
+        border: 1px solid {{ resume.accent }}60; color: #333; border-radius: 999px;
+        padding: 2px 10px; font-size: 8.7pt;
+    }
+
+    .watermark {
+        position: absolute; top: 48%; left: 0; width: 100%; text-align: center;
+        transform: rotate(-30deg); font-size: 42pt; font-weight: 800;
+        color: rgba(0,0,0,.06); letter-spacing: .12em; pointer-events: none;
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    {% if watermark %}<div class="watermark">SMARTCV FREE</div>{% endif %}
+    <header>
+        <h1>{{ resume.personal_info.full_name }}</h1>
+        <h2>{{ resume.personal_info.professional_title }}</h2>
+        <div class="header-rule"><div class="line"></div></div>
+        {% with pi=resume.personal_info %}
+        <div class="header-contact">
+            {% if pi.email %}<span>{{ pi.email }}</span>{% endif %}
+            {% if pi.phone %}<span>{{ pi.phone }}</span>{% endif %}
+            {% if pi.address %}<span>{{ pi.address }}</span>{% endif %}
+            {% if pi.linkedin %}<span>{{ pi.linkedin }}</span>{% endif %}
+            {% if pi.github %}<span>{{ pi.github }}</span>{% endif %}
+        </div>
+        {% endwith %}
+    </header>
+
+    <div class="body-grid">
+        <div class="col-main">
+            {% if resume.professional_summary %}
+            <section><p class="summary">{{ resume.professional_summary }}</p></section>
+            {% endif %}
+
+            {% if resume.experiences.all %}
+            <section>
+                <h3 class="section-h">Experience</h3>
+                {% for e in resume.experiences.all %}
+                <div class="entry">
+                    <div class="entry-top">{{ e.job_title }}</div>
+                    <div class="entry-meta">
+                        <span>{{ e.company }}{% if e.location %}, {{ e.location }}{% endif %}</span>
+                        <span>{{ e.start_date|date:"M Y" }} – {% if e.is_current %}Present{% else %}{{ e.end_date|date:"M Y" }}{% endif %}</span>
+                    </div>
+                    {% if e.description %}<p>{{ e.description|linebreaksbr }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.educations.all %}
+            <section>
+                <h3 class="section-h">Education</h3>
+                {% for ed in resume.educations.all %}
+                <div class="entry">
+                    <div class="entry-top">{{ ed.degree }}{% if ed.field_of_study %}, {{ ed.field_of_study }}{% endif %}</div>
+                    <div class="entry-meta">
+                        <span>{{ ed.institution }}{% if ed.gpa %} · GPA {{ ed.gpa }}{% endif %}</span>
+                        <span>{{ ed.start_date|date:"Y" }} – {% if ed.end_date %}{{ ed.end_date|date:"Y" }}{% else %}Present{% endif %}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.projects.all %}
+            <section>
+                <h3 class="section-h">Projects</h3>
+                {% for p in resume.projects.all %}
+                <div class="entry">
+                    <div class="entry-top">{{ p.name }}</div>
+                    {% if p.technologies_used %}<div class="entry-meta"><span>{{ p.technologies_used }}</span></div>{% endif %}
+                    {% if p.description %}<p>{{ p.description|linebreaksbr }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.publications.all %}
+            <section>
+                <h3 class="section-h">Publications</h3>
+                {% for p in resume.publications.all %}
+                <div class="entry">
+                    <div class="entry-top">{{ p.title }}</div>
+                    <div class="entry-meta"><span>{% if p.publisher %}{{ p.publisher }}{% endif %}</span>{% if p.date %}<span>{{ p.date|date:"Y" }}</span>{% endif %}</div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.custom_sections.all %}
+            {% for c in resume.custom_sections.all %}
+            <section><h3 class="section-h">{{ c.title }}</h3><p>{{ c.content|linebreaksbr }}</p></section>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="col-side">
+            {% if resume.skills.all %}
+            <section>
+                <h3 class="section-h">Skills</h3>
+                {% for s in resume.skills.all %}
+                <div class="side-item">
+                    <div class="name">{{ s.name }}</div>
+                    <div class="dot-bar">
+                        {% for i in "12345" %}
+                        <div class="dot {% if forloop.counter <= s.level %}filled{% endif %}"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.languages.all %}
+            <section>
+                <h3 class="section-h">Languages</h3>
+                {% for l in resume.languages.all %}
+                <div class="side-item"><span class="name">{{ l.name }}</span><br><span class="meta">{{ l.get_proficiency_display }}</span></div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.certifications.all %}
+            <section>
+                <h3 class="section-h">Certifications</h3>
+                {% for c in resume.certifications.all %}
+                <div class="side-item"><span class="name">{{ c.name }}</span><br><span class="meta">{{ c.issuing_organization }}</span></div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.awards.all %}
+            <section>
+                <h3 class="section-h">Awards</h3>
+                {% for a in resume.awards.all %}
+                <div class="side-item"><span class="name">{{ a.title }}</span>{% if a.organization %}<br><span class="meta">{{ a.organization }}</span>{% endif %}</div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.hobbies.all %}
+            <section>
+                <h3 class="section-h">Interests</h3>
+                <div class="pill-wrap">{% for h in resume.hobbies.all %}<span class="pill">{{ h.name }}</span>{% endfor %}</div>
+            </section>
+            {% endif %}
+
+            {% if resume.references.all %}
+            <section>
+                <h3 class="section-h">References</h3>
+                {% for r in resume.references.all %}
+                <div class="side-item"><span class="name">{{ r.name }}</span><br><span class="meta">{{ r.position }}{% if r.company %}, {{ r.company }}{% endif %}</span></div>
+                {% endfor %}
+            </section>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

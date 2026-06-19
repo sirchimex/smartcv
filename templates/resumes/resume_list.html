@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}My CVs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <h1 class="h4 section-title mb-0">My CVs</h1>
+    <a href="{% url 'resumes:create' %}" class="btn btn-accent"><i class="bi bi-plus-lg"></i> New CV</a>
+</div>
+
+{% if resumes %}
+<div class="row g-3">
+    {% for resume in resumes %}
+    <div class="col-md-6 col-lg-4">
+        <div class="scv-card h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between">
+                <h2 class="h6 fw-bold">{{ resume.title }}</h2>
+                <span class="badge text-bg-light">{{ resume.completion_percentage }}%</span>
+            </div>
+            <p class="text-muted small mb-3">{{ resume.template.name }} &middot; updated {{ resume.updated_at|timesince }} ago</p>
+            <div class="mt-auto d-flex gap-2 flex-wrap">
+                <a href="{% url 'resumes:builder' resume.pk %}" class="btn btn-sm btn-brand">Edit</a>
+                <a href="{% url 'resumes:preview' resume.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">Preview</a>
+                <a href="{% url 'resumes:pdf' resume.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-download"></i></a>
+                <form action="{% url 'resumes:duplicate' resume.pk %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-secondary" title="Duplicate"><i class="bi bi-copy"></i></button>
+                </form>
+                <form action="{% url 'resumes:delete' resume.pk %}" method="post" class="d-inline" onsubmit="return confirm('Delete this CV permanently?');">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="scv-card text-center py-5">
+    <p class="text-muted mb-3">You haven't created any CVs yet.</p>
+    <a href="{% url 'resumes:create' %}" class="btn btn-accent">Create your first CV</a>
+</div>
+{% endif %}
+{% endblock %}

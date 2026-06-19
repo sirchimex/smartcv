@@ -1,0 +1,141 @@
+<!--
+    Executive Classic intentionally forces a serif typeface regardless of
+    resume.font_family - the conservative, traditional look is the point of
+    this layout, so we don't let the font picker undercut it.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.title }}</title>
+<style>
+    @page { size: A4; margin: 20mm 22mm; }
+    body {
+        margin: 0;
+        font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+        color: #1f1f1f;
+        font-size: 10.5pt;
+        line-height: 1.55;
+    }
+    .page { position: relative; }
+    header { text-align: center; margin-bottom: 10px; }
+    header h1 {
+        font-size: 21pt; font-weight: 600; margin: 0;
+        letter-spacing: .06em; text-transform: uppercase;
+    }
+    header h2 { font-size: 10.5pt; font-weight: 400; font-style: italic; color: #444; margin: 4px 0 8px; }
+    .contact-row { font-size: 9pt; color: #555; }
+    .contact-row span { margin: 0 8px; }
+
+    .rule-double { border-top: 2px solid {{ resume.accent }}; border-bottom: .75px solid {{ resume.accent }}; height: 3px; margin: 14px 0 16px; }
+    .rule-thin { border: none; border-top: .75px solid #ccc; margin: 16px 0; }
+
+    .summary { text-align: center; color: #333; margin: 0 0 4px; }
+
+    h3.section-h {
+        font-size: 10.5pt; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .1em; color: {{ resume.accent }}; margin: 0 0 10px;
+    }
+    .entry { margin-bottom: 12px; }
+    .entry-top { display: flex; justify-content: space-between; font-weight: 700; }
+    .entry-sub { font-style: italic; color: #555; font-size: 9.8pt; margin-bottom: 3px; }
+    .entry p { margin: 3px 0 0; }
+
+    .plain-list { margin: 0; padding: 0; }
+    .plain-list li { margin-bottom: 4px; }
+
+    .watermark {
+        position: absolute; top: 48%; left: 0; width: 100%; text-align: center;
+        transform: rotate(-30deg); font-size: 40pt; font-weight: 700;
+        color: rgba(0,0,0,.06); letter-spacing: .12em; pointer-events: none;
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    {% if watermark %}<div class="watermark">SMARTCV FREE</div>{% endif %}
+    <header>
+        <h1>{{ resume.personal_info.full_name }}</h1>
+        <h2>{{ resume.personal_info.professional_title }}</h2>
+        <div class="contact-row">
+            {% with pi=resume.personal_info %}
+            {% if pi.email %}<span>{{ pi.email }}</span>{% endif %}
+            {% if pi.phone %}<span>{{ pi.phone }}</span>{% endif %}
+            {% if pi.address %}<span>{{ pi.address }}</span>{% endif %}
+            {% if pi.linkedin %}<span>{{ pi.linkedin }}</span>{% endif %}
+            {% endwith %}
+        </div>
+    </header>
+    <div class="rule-double"></div>
+
+    {% if resume.professional_summary %}<p class="summary">{{ resume.professional_summary }}</p>{% endif %}
+
+    {% if resume.experiences.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Professional Experience</h3>
+    {% for e in resume.experiences.all %}
+    <div class="entry">
+        <div class="entry-top"><span>{{ e.job_title }}, {{ e.company }}</span><span>{{ e.start_date|date:"M Y" }} - {% if e.is_current %}Present{% else %}{{ e.end_date|date:"M Y" }}{% endif %}</span></div>
+        {% if e.location %}<div class="entry-sub">{{ e.location }}</div>{% endif %}
+        {% if e.description %}<p>{{ e.description|linebreaksbr }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if resume.educations.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Education</h3>
+    {% for ed in resume.educations.all %}
+    <div class="entry">
+        <div class="entry-top"><span>{{ ed.degree }}{% if ed.field_of_study %}, {{ ed.field_of_study }}{% endif %}</span><span>{{ ed.start_date|date:"Y" }} - {% if ed.end_date %}{{ ed.end_date|date:"Y" }}{% else %}Present{% endif %}</span></div>
+        <div class="entry-sub">{{ ed.institution }}{% if ed.gpa %} &middot; GPA {{ ed.gpa }}{% endif %}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if resume.certifications.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Certifications</h3>
+    <ul class="plain-list">{% for c in resume.certifications.all %}<li>{{ c.name }}, {{ c.issuing_organization }}{% if c.issue_date %} ({{ c.issue_date|date:"Y" }}){% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.awards.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Honors & Awards</h3>
+    <ul class="plain-list">{% for a in resume.awards.all %}<li>{{ a.title }}{% if a.organization %}, {{ a.organization }}{% endif %}{% if a.date %} ({{ a.date|date:"Y" }}){% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.publications.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Publications</h3>
+    <ul class="plain-list">{% for p in resume.publications.all %}<li>{{ p.title }}{% if p.publisher %}, {{ p.publisher }}{% endif %}{% if p.date %} ({{ p.date|date:"Y" }}){% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.skills.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Core Competencies</h3>
+    <p>{% for s in resume.skills.all %}{{ s.name }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if resume.references.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">References</h3>
+    <ul class="plain-list">{% for r in resume.references.all %}<li>{{ r.name }}, {{ r.position }}{% if r.company %}, {{ r.company }}{% endif %} &mdash; {{ r.email }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.hobbies.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">Personal Interests</h3>
+    <p>{% for h in resume.hobbies.all %}{{ h.name }}{% if not forloop.last %} &middot; {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if resume.custom_sections.all %}
+    {% for c in resume.custom_sections.all %}
+    <hr class="rule-thin">
+    <h3 class="section-h">{{ c.title }}</h3>
+    <p>{{ c.content|linebreaksbr }}</p>
+    {% endfor %}
+    {% endif %}
+</div>
+</body>
+</html>

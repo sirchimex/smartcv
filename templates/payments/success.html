@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Upgraded to Premium!{% endblock %}
+{% block content %}
+<div class="scv-card text-center py-5" style="max-width: 500px; margin: 4rem auto;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
+    <h1 class="h4 section-title mb-2">You're now Premium!</h1>
+    <p class="text-muted mb-4">Unlimited CVs, all 10 templates, and watermark-free PDF downloads are unlocked.</p>
+    <a href="{% url 'resumes:dashboard' %}" class="btn btn-accent">Go to dashboard</a>
+</div>
+{% endblock %}

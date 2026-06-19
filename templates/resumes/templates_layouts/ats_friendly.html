@@ -1,0 +1,143 @@
+<!--
+    ATS-Friendly layout: deliberately avoids columns, icons, background
+    colors, and decorative fonts so applicant-tracking-system parsers can
+    read every field reliably. We intentionally do NOT use resume.font_family
+    here - a plain sans-serif keeps this template's compatibility promise
+    regardless of what the user picked in "Design & Customization".
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.title }}</title>
+<style>
+    @page { size: A4; margin: 18mm 20mm; }
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #1a1a1a;
+        font-size: 10.5pt;
+        line-height: 1.5;
+    }
+    .page { position: relative; }
+    h1 { font-size: 18pt; margin: 0 0 2px; font-weight: bold; }
+    h2.title { font-size: 11pt; font-weight: normal; margin: 0 0 8px; color: #333; }
+    .contact-line { font-size: 9.5pt; color: #333; margin-bottom: 14px; }
+    p.summary { margin: 0 0 14px; }
+
+    h3.section-h {
+        font-size: 11pt; font-weight: bold; text-transform: uppercase;
+        border-bottom: 1px solid {{ resume.accent }}; padding-bottom: 2px;
+        margin: 16px 0 8px;
+    }
+    .entry { margin-bottom: 10px; }
+    .entry-top { font-weight: bold; font-size: 10.5pt; }
+    .entry-top .dates { font-weight: normal; float: right; }
+    .entry-sub { font-size: 9.8pt; color: #333; margin-bottom: 2px; }
+    ul { margin: 4px 0 0 18px; padding: 0; }
+    li { margin-bottom: 2px; }
+
+    .watermark {
+        position: absolute; top: 48%; left: 0; width: 100%; text-align: center;
+        transform: rotate(-30deg); font-size: 40pt; font-weight: bold;
+        color: rgba(0,0,0,.06); letter-spacing: .1em; pointer-events: none;
+    }
+</style>
+</head>
+<body>
+<div class="page">
+    {% if watermark %}<div class="watermark">SMARTCV FREE</div>{% endif %}
+    <h1>{{ resume.personal_info.full_name }}</h1>
+    <h2 class="title">{{ resume.personal_info.professional_title }}</h2>
+    <div class="contact-line">
+        {% with pi=resume.personal_info %}
+        {% if pi.email %}{{ pi.email }} | {% endif %}
+        {% if pi.phone %}{{ pi.phone }} | {% endif %}
+        {% if pi.address %}{{ pi.address }} | {% endif %}
+        {% if pi.linkedin %}{{ pi.linkedin }} | {% endif %}
+        {% if pi.github %}{{ pi.github }}{% endif %}
+        {% endwith %}
+    </div>
+    {% if resume.professional_summary %}
+        <h3 class="section-h">Summary</h3>
+        <p class="summary">{{ resume.professional_summary }}</p>
+    {% endif %}
+
+    {% if resume.experiences.all %}
+    <h3 class="section-h">Experience</h3>
+    {% for e in resume.experiences.all %}
+    <div class="entry">
+        <div class="entry-top">{{ e.job_title }}, {{ e.company }}<span class="dates">{{ e.start_date|date:"M Y" }} - {% if e.is_current %}Present{% else %}{{ e.end_date|date:"M Y" }}{% endif %}</span></div>
+        {% if e.location %}<div class="entry-sub">{{ e.location }}</div>{% endif %}
+        {% if e.description %}<p>{{ e.description|linebreaksbr }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if resume.educations.all %}
+    <h3 class="section-h">Education</h3>
+    {% for ed in resume.educations.all %}
+    <div class="entry">
+        <div class="entry-top">{{ ed.degree }}{% if ed.field_of_study %}, {{ ed.field_of_study }}{% endif %}, {{ ed.institution }}<span class="dates">{{ ed.start_date|date:"Y" }} - {% if ed.end_date %}{{ ed.end_date|date:"Y" }}{% else %}Present{% endif %}</span></div>
+        {% if ed.gpa %}<div class="entry-sub">GPA: {{ ed.gpa }}</div>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if resume.skills.all %}
+    <h3 class="section-h">Skills</h3>
+    <p>{% for s in resume.skills.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if resume.languages.all %}
+    <h3 class="section-h">Languages</h3>
+    <p>{% for l in resume.languages.all %}{{ l.name }} ({{ l.get_proficiency_display }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if resume.certifications.all %}
+    <h3 class="section-h">Certifications</h3>
+    <ul>
+        {% for c in resume.certifications.all %}<li>{{ c.name }}, {{ c.issuing_organization }}{% if c.issue_date %} ({{ c.issue_date|date:"Y" }}){% endif %}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if resume.projects.all %}
+    <h3 class="section-h">Projects</h3>
+    {% for p in resume.projects.all %}
+    <div class="entry">
+        <div class="entry-top">{{ p.name }}</div>
+        {% if p.technologies_used %}<div class="entry-sub">{{ p.technologies_used }}</div>{% endif %}
+        {% if p.description %}<p>{{ p.description|linebreaksbr }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if resume.awards.all %}
+    <h3 class="section-h">Awards</h3>
+    <ul>{% for a in resume.awards.all %}<li>{{ a.title }}{% if a.organization %}, {{ a.organization }}{% endif %}{% if a.date %} ({{ a.date|date:"Y" }}){% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.publications.all %}
+    <h3 class="section-h">Publications</h3>
+    <ul>{% for p in resume.publications.all %}<li>{{ p.title }}{% if p.publisher %}, {{ p.publisher }}{% endif %}{% if p.date %} ({{ p.date|date:"Y" }}){% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.references.all %}
+    <h3 class="section-h">References</h3>
+    <ul>{% for r in resume.references.all %}<li>{{ r.name }}, {{ r.position }}{% if r.company %}, {{ r.company }}{% endif %} - {{ r.email }}</li>{% endfor %}</ul>
+    {% endif %}
+
+    {% if resume.hobbies.all %}
+    <h3 class="section-h">Hobbies & Interests</h3>
+    <p>{% for h in resume.hobbies.all %}{{ h.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if resume.custom_sections.all %}
+    {% for c in resume.custom_sections.all %}
+    <h3 class="section-h">{{ c.title }}</h3>
+    <p>{{ c.content|linebreaksbr }}</p>
+    {% endfor %}
+    {% endif %}
+</div>
+</body>
+</html>
